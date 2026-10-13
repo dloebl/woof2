@@ -1,0 +1,11 @@
+/* Symbols exported from libwoff2dec/libwoff2enc (GNU ld/gold/lld version
+   script): only the woff2 C++ API. */
+{
+  global:
+    _ZN5woff2*;
+    _ZTVN5woff2*;
+    _ZTIN5woff2*;
+    _ZTSN5woff2*;
+  local:
+    *;
+};

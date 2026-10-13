@@ -1,0 +1,15 @@
+/* Symbols exported from the shared libraries (GNU ld/gold/lld version
+   script). Only the woff2 C++ API and the private woff2_rs_* entry points
+   are exported; all Rust-internal symbols (std, allocator shims, ...) are
+   hidden. The Rust crate is compiled with -C symbol-mangling-version=v0, so
+   its own symbols (_R...) never match the C++ patterns below. */
+{
+  global:
+    _ZN5woff2*;
+    _ZTVN5woff2*;
+    _ZTIN5woff2*;
+    _ZTSN5woff2*;
+    woff2_rs_*;
+  local:
+    *;
+};

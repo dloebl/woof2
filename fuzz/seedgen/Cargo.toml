@@ -1,0 +1,11 @@
+[package]
+name = "woff2-seedgen"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[dependencies]
+woff2 = { path = "../..", features = ["system-brotli"] }
+
+[workspace]
+members = ["."]

@@ -1,0 +1,48 @@
+[package]
+name = "woff2"
+version = "1.0.2"
+edition = "2021"
+rust-version = "1.63"
+license = "MIT"
+description = "WOFF2 font compression and decompression. A Rust port of google/woff2 that is a binary (ABI) and source (API) compatible drop-in replacement for libwoff2common/libwoff2dec/libwoff2enc."
+repository = "https://github.com/dloebl/woof2"
+readme = "README.md"
+keywords = ["woff2", "font", "ttf", "brotli"]
+categories = ["compression", "encoding"]
+build = "build.rs"
+autobins = false
+exclude = ["/fuzz", "/brotli"]
+
+[lib]
+name = "woff2"
+path = "src/lib.rs"
+
+[features]
+default = ["system-brotli"]
+# Link against the system libbrotlienc/libbrotlidec and offer convenience
+# entry points that do not require passing brotli function pointers.
+system-brotli = []
+# Export the `woff2_rs_*` C entry points used by the C++ ABI layer in `cpp/`.
+capi = []
+# Mirror the diagnostics that the C++ library printed to stderr when built
+# with FONT_COMPRESSION_BIN (the CMake NOISY_LOGGING option).
+noisy-logging = []
+
+[[bin]]
+name = "woff2_compress"
+path = "src/bin/woff2_compress.rs"
+required-features = ["system-brotli"]
+
+[[bin]]
+name = "woff2_decompress"
+path = "src/bin/woff2_decompress.rs"
+required-features = ["system-brotli"]
+
+[[bin]]
+name = "woff2_info"
+path = "src/bin/woff2_info.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "unwind"

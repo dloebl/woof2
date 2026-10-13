@@ -1,0 +1,5 @@
+__ZN5woff2*
+__ZTVN5woff2*
+__ZTIN5woff2*
+__ZTSN5woff2*
+_woff2_rs_*
