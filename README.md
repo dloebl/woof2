@@ -39,7 +39,7 @@ original C++ implementation: existing users do not need to change anything.
 The only intentional differences are:
 
 * Inputs on which the original code had undefined behavior (heap buffer
-  overflows, see `fuzz/reference/README.md`) are rejected cleanly (the
+  overflows, see `fuzz/README.md`) are rejected cleanly (the
   conversion returns `false`).
 * If one of the large buffers (sized from the input) cannot be allocated, the
   conversion returns `false` instead of throwing `std::bad_alloc`. Rust
@@ -63,7 +63,7 @@ src/                    the Rust crate: decoder, encoder (font parsing,
                         normalization, glyf/loca transform), command line
                         tools
 fuzz/                   differential fuzzing against the original C++ code
-                        (kept in fuzz/reference/)
+                        (google/woff2 as the fuzz/reference submodule)
 ```
 
 The Rust code is linked into `libwoff2common`. `libwoff2dec` and

@@ -1,6 +1,6 @@
 //! Builds, into the fuzzer binaries:
-//!  * the original C++ implementation (fuzz/reference), in namespace
-//!    `woff2_ref`,
+//!  * the original C++ implementation (the fuzz/reference submodule, with
+//!    reference-ub-fixes.patch applied to a copy), in namespace `woff2_ref`,
 //!  * the new C++ ABI layer (cpp/), which forwards to the Rust crate,
 //!  * the C glue (fuzz/glue/glue.cc) for both.
 //!
@@ -8,8 +8,40 @@
 //! the C++ code is instrumented as well, including coverage feedback.
 
 use std::env;
-use std::path::PathBuf;
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::process::Command;
+
+/// Copies the reference sources (the fuzz/reference submodule, google/woff2)
+/// into OUT_DIR and applies reference-ub-fixes.patch there, leaving the
+/// submodule itself untouched. Returns the patched `src` directory.
+fn patched_reference(fuzz: &Path) -> PathBuf {
+    let src = fuzz.join("reference").join("src");
+    if !src.join("woff2_dec.cc").exists() {
+        panic!(
+            "\n\nThe reference implementation (google/woff2) is not checked out. \
+             Fetch it with:\n\n    git submodule update --init --checkout fuzz/reference\n\n"
+        );
+    }
+    let out = PathBuf::from(env::var("OUT_DIR").unwrap()).join("reference");
+    let _ = fs::remove_dir_all(&out);
+    fs::create_dir_all(out.join("src")).unwrap();
+    for entry in fs::read_dir(&src).unwrap() {
+        let path = entry.unwrap().path();
+        if matches!(path.extension().and_then(|e| e.to_str()), Some("cc" | "h")) {
+            fs::copy(&path, out.join("src").join(path.file_name().unwrap())).unwrap();
+        }
+    }
+    let status = Command::new("patch")
+        .args(["-p1", "-N", "-s", "-d"])
+        .arg(&out)
+        .arg("-i")
+        .arg(fuzz.join("reference-ub-fixes.patch"))
+        .status()
+        .expect("failed to run `patch`");
+    assert!(status.success(), "applying reference-ub-fixes.patch failed");
+    out.join("src")
+}
 
 fn brotli_include() -> Vec<PathBuf> {
     let mut dirs = Vec::new();
@@ -88,9 +120,12 @@ fn main() {
     let fuzz = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let root = fuzz.parent().unwrap().to_path_buf();
     let reference = fuzz.join("reference");
+    let reference_src = patched_reference(&fuzz);
 
     println!("cargo:rerun-if-changed=glue/glue.cc");
-    println!("cargo:rerun-if-changed=reference");
+    println!("cargo:rerun-if-changed=reference/src");
+    println!("cargo:rerun-if-changed=reference/include");
+    println!("cargo:rerun-if-changed=reference-ub-fixes.patch");
     println!("cargo:rerun-if-changed=../cpp");
     println!("cargo:rerun-if-changed=../include");
     println!("cargo:rerun-if-env-changed=WOFF2_FUZZ_CXX");
@@ -111,9 +146,9 @@ fn main() {
     let mut b = base();
     b.define("woff2", "woff2_ref")
         .include(reference.join("include"))
-        .include(reference.join("src"));
+        .include(&reference_src);
     for s in ref_sources {
-        b.file(reference.join("src").join(s));
+        b.file(reference_src.join(s));
     }
     b.define("GLUE_REF", None)
         .define("GLUE_PREFIX", "ref_")
